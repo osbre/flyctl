@@ -25,6 +25,14 @@ const (
 	DetachedPlatform = "detached"
 )
 
+type RestartPolicy string
+
+const (
+	RestartPolicyAlways    RestartPolicy = "always"
+	RestartPolicyNever     RestartPolicy = "no"
+	RestartPolicyOnFailure RestartPolicy = "on-failure"
+)
+
 func NewConfig() *Config {
 	return &Config{
 		RawDefinition:    map[string]any{},
@@ -40,6 +48,7 @@ type Config struct {
 	PrimaryRegion  string        `toml:"primary_region,omitempty" json:"primary_region,omitempty"`
 	KillSignal     *string       `toml:"kill_signal,omitempty" json:"kill_signal,omitempty"`
 	KillTimeout    *api.Duration `toml:"kill_timeout,omitempty" json:"kill_timeout,omitempty"`
+	Restart        *Restart      `toml:"restart,omitempty" json:"restart,omitempty"`
 	SwapSizeMB     *int          `toml:"swap_size_mb,omitempty" json:"swap_size_mb,omitempty"`
 	ConsoleCommand string        `toml:"console_command,omitempty" json:"console_command,omitempty"`
 
@@ -142,6 +151,11 @@ type Experimental struct {
 	AutoRollback bool     `toml:"auto_rollback,omitempty" json:"auto_rollback,omitempty"`
 	EnableConsul bool     `toml:"enable_consul,omitempty" json:"enable_consul,omitempty"`
 	EnableEtcd   bool     `toml:"enable_etcd,omitempty" json:"enable_etcd,omitempty"`
+}
+
+type Restart struct {
+	Policy     RestartPolicy `toml:"policy,omitempty" json:"policy,omitempty"`
+	MaxRetries int           `toml:"retries,omitempty" json:"retries,omitempty"`
 }
 
 func (c *Config) ConfigFilePath() string {
