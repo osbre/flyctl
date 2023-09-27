@@ -30,7 +30,7 @@ func (c *Config) ToReleaseMachineConfig() (*api.MachineConfig, error) {
 			Cmd:        releaseCmd,
 			SwapSizeMB: c.SwapSizeMB,
 		},
-		Restart: api.MachineRestart{
+		Restart: &api.MachineRestart{
 			Policy: api.MachineRestartPolicyNo,
 		},
 		AutoDestroy: true,
@@ -71,7 +71,7 @@ func (c *Config) ToConsoleMachineConfig() (*api.MachineConfig, error) {
 			Exec:       []string{"/bin/sleep", "inf"},
 			SwapSizeMB: c.SwapSizeMB,
 		},
-		Restart: api.MachineRestart{
+		Restart: &api.MachineRestart{
 			Policy: api.MachineRestartPolicyNo,
 		},
 		AutoDestroy: true,
@@ -191,11 +191,14 @@ func (c *Config) updateMachineConfig(src *api.MachineConfig) (*api.MachineConfig
 	machine.MergeFiles(mConfig, c.MergedFiles)
 
 	// Restart Policy
-	mConfig.Restart = api.MachineRestart{
-		Policy:     api.MachineRestartPolicy(c.Restart.Policy),
-		MaxRetries: c.Restart.MaxRetries,
-	}
+	mConfig.Restart = nil
 
+	if c.Restart != nil {
+		mConfig.Restart = &api.MachineRestart{
+			Policy:     api.MachineRestartPolicy(c.Restart.Policy),
+			MaxRetries: c.Restart.MaxRetries,
+		}
+	}
 	return mConfig, nil
 }
 

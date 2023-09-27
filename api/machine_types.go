@@ -564,7 +564,7 @@ type MachineConfig struct {
 	// "fly deploy" must preserve them, if you add anything here, ensure it is propagated on deploys
 	Schedule    string           `json:"schedule,omitempty"`
 	AutoDestroy bool             `json:"auto_destroy,omitempty"`
-	Restart     MachineRestart   `json:"restart,omitempty"`
+	Restart     *MachineRestart  `json:"restart,omitempty"`
 	Guest       *MachineGuest    `json:"guest,omitempty"`
 	DNS         *DNSConfig       `json:"dns,omitempty"`
 	Processes   []MachineProcess `json:"processes,omitempty"`
