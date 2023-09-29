@@ -101,6 +101,7 @@ func (cfg *Config) ValidateForMachinesPlatform(ctx context.Context) (err error, 
 		cfg.validateProcessesSection,
 		cfg.validateMachineConversion,
 		cfg.validateConsoleCommand,
+		cfg.validateRestartPolicy,
 	}
 
 	for _, vFunc := range validators {
@@ -285,6 +286,28 @@ func (cfg *Config) validateMachineConversion() (extraInfo string, err error) {
 func (cfg *Config) validateConsoleCommand() (extraInfo string, err error) {
 	if _, vErr := shlex.Split(cfg.ConsoleCommand); vErr != nil {
 		extraInfo += fmt.Sprintf("Can't shell split console command: '%s'\n", cfg.ConsoleCommand)
+		err = ValidationError
+	}
+	return
+}
+
+func (cfg *Config) validateRestartPolicy() (extraInfo string, err error) {
+	if cfg.Restart == nil {
+		return
+	}
+
+	switch cfg.Restart.Policy {
+	case RestartPolicyAlways, RestartPolicyNever, RestartPolicyOnFailure:
+		// do nothing
+	default:
+		extraInfo += fmt.Sprintf("Restart policy '%s' is not supported\n", cfg.Restart.Policy)
+		err = ValidationError
+
+	}
+
+	// make sure restart.Attempts is a positive number
+	if cfg.Restart.MaxRetries < 0 {
+		extraInfo += fmt.Sprintf("Restart attempts '%d' is not supported\n", cfg.Restart.MaxRetries)
 		err = ValidationError
 	}
 	return
