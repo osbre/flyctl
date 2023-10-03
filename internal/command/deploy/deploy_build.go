@@ -164,7 +164,6 @@ func determineImage(ctx context.Context, appConfig *appconfig.Config) (img *imgs
 		sendDurationMetrics()
 	}
 
-	fmt.Println("this is returned!")
 	if err == nil {
 		tb.Printf("image: %s\n", img.Tag)
 		tb.Printf("image labels:%s\n", img.Labels)
