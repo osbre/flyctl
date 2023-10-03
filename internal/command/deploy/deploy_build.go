@@ -128,6 +128,7 @@ func determineImage(ctx context.Context, appConfig *appconfig.Config) (img *imgs
 		return
 	}
 
+	buildArgs["BP_IMAGE_LABELS"] = `somelabel="somevalue"`
 	opts.BuildArgs = buildArgs
 
 	if opts.DockerfilePath, err = resolveDockerfilePath(ctx, appConfig); err != nil {
@@ -163,8 +164,10 @@ func determineImage(ctx context.Context, appConfig *appconfig.Config) (img *imgs
 		sendDurationMetrics()
 	}
 
+	fmt.Println("this is returned!")
 	if err == nil {
 		tb.Printf("image: %s\n", img.Tag)
+		tb.Printf("image labels:%s\n", img.Labels)
 		tb.Printf("image size: %s\n", humanize.Bytes(uint64(img.Size)))
 	}
 
