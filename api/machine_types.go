@@ -686,6 +686,7 @@ type LaunchMachineInput struct {
 }
 
 type MachineProcess struct {
+	Name               string            `json:"name,omitempty"`
 	Image              string            `json:"image,omitempty"`
 	Mounts             []MachineMount    `json:"mounts,omitempty"`
 	Files              []*File           `json:"files,omitempty"`
