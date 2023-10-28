@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/superfly/flyctl/client"
@@ -145,6 +146,17 @@ func printActions(ctx context.Context, act resset.Action) string {
 	return strings.Join(actions, ", ")
 }
 
+func timeHighOrder(d time.Duration) string {
+	switch {
+	case d > time.Hour*24:
+		return fmt.Sprintf("%d days", d.Round(time.Hour*24)/(time.Hour*24))
+	case d > time.Hour:
+		return fmt.Sprintf("%d hours", d.Round(time.Hour)/time.Hour)
+	default:
+		return fmt.Sprintf("%d minutes", d.Round(time.Minute)/time.Minute)
+	}
+}
+
 func printMacaroon(ctx context.Context, maps mappings, m *macaroon.Macaroon) error {
 	m.Add(&flyio.Organization{ID: 9709, Mask: resset.ActionRead})
 	m.Add(&flyio.Organization{ID: 9709, Mask: (resset.ActionRead | resset.ActionWrite)})
@@ -155,6 +167,23 @@ func printMacaroon(ctx context.Context, maps mappings, m *macaroon.Macaroon) err
 			2004659: (resset.ActionRead | resset.ActionWrite),
 			5392:    resset.ActionWrite,
 		},
+	})
+	m.Add(&flyio.Volumes{
+		Volumes: resset.ResourceSet[string]{
+			"cab76cb897a6a78c9b6": resset.ActionRead,
+			"cb98cb89bc9789CB98c": (resset.ActionRead | resset.ActionDelete),
+			"89a7cc8b7c987bc9cbb": resset.ActionControl,
+		},
+	})
+	m.Add(&flyio.FeatureSet{
+		Features: resset.ResourceSet[string]{
+			"wg":               resset.ActionRead,
+			"space-modulators": (resset.ActionRead | resset.ActionDelete),
+			"flobdust":         resset.ActionControl,
+		},
+	})
+	m.Add(&flyio.Mutations{
+		Mutations: []string{"insert_frobnicator", "delete_frobnicator", "demote_kurt"},
 	})
 
 	caveats := m.UnsafeCaveats.Caveats
@@ -172,6 +201,11 @@ func printMacaroon(ctx context.Context, maps mappings, m *macaroon.Macaroon) err
 	}
 
 	fmt.Printf("Token ...%x (from %s)\n", kid, m.Location)
+	if m.Location == flyio.LocationAuthentication {
+		fmt.Printf("This is an authentication token for Fly.io\n")
+	} else if m.Location == flyio.LocationPermission {
+		fmt.Printf("This is a root permission token for Fly.io\n")
+	}
 	fmt.Printf("Caveats in this token:\n")
 
 	depth := 0
@@ -192,25 +226,77 @@ func printMacaroon(ctx context.Context, maps mappings, m *macaroon.Macaroon) err
 		fmt.Printf(tabs+format+"\n", args...)
 	}
 
-	for _, ocav := range caveats {
+	stringset := func(ld, kinds, kind string, rs resset.ResourceSet[string]) {
+		dprint("%s for the following %s:", ld, kinds)
+		for ft, axs := range rs {
+			dep(func() {
+				dprint("For %s '%s', allowed actions: %s", kind, ft, printActions(ctx, axs))
+			})
+		}
+	}
+
+	for i, ocav := range caveats {
+		leadin := "* And exclusively"
+		if i == 0 {
+			leadin = "* Exclusively"
+		}
+
 		dep(func() {
 			switch cav := ocav.(type) {
 			case *flyio.Organization:
-				dprint("* Exclusively for organization '%s'", lookup(cav.ID, maps.orgs))
+				dprint("%s for organization '%s'", leadin, lookup(cav.ID, maps.orgs))
 				dep(func() {
 					dprint("Allowed actions: %s", printActions(ctx, cav.Mask))
 				})
 			case *flyio.Apps:
-				dprint("* Exclusive for the following apps:")
+				dprint("%s for the following apps:", leadin)
 				for appid, axs := range cav.Apps {
 					dep(func() {
 						dprint("For app '%s', allowed actions: %s", lookup(appid, maps.apps), printActions(ctx, axs))
 					})
 				}
+			case *flyio.FeatureSet:
+				stringset(leadin, "features", "feature", cav.Features)
+			case *flyio.Volumes:
+				stringset(leadin, "volumes", "volume", cav.Volumes)
+			case *flyio.Machines:
+				stringset(leadin, "machines", "machine", cav.Machines)
+			case *flyio.MachineFeatureSet:
+				stringset(leadin, "machine features", "machine feature", cav.Features)
+			case *flyio.Mutations:
+				dprint("%s for the following GraphQL API mutations: %s", leadin, strings.Join(cav.Mutations, ", "))
+			case *flyio.Clusters:
+				stringset(leadin, "clusters", "cluster", cav.Clusters)
+			case *macaroon.ValidityWindow:
+				before := time.Unix(cav.NotBefore, 0)
+				after := time.Unix(cav.NotAfter, 0)
+				now := time.Now()
+				valid := false
+
+				if now.After(before) && now.Before(after) {
+					valid = true
+				}
+
+				beforeAgo := now.Sub(before)
+				afterAgo := after.Sub(now)
+
+				validity := "and is currently valid"
+				if !valid {
+					validity = "and is INVALID"
+				}
+
+				dprint("* This token expires (%s)", validity)
+				dep(func() {
+					dprint("Valid as of: %s ago", timeHighOrder(beforeAgo))
+					dprint("Valid until: %s from now", timeHighOrder(afterAgo))
+				})
+
 			case *macaroon.Caveat3P:
 				switch cav.Location {
 				case flyio.LocationAuthentication:
 					dprint("* Requires authentication to Fly.io")
+				default:
+					dprint("* This token can only be satisfied by talking to %s", cav.Location)
 				}
 			default:
 				dprint("cav: %T %+v", cav, cav)
