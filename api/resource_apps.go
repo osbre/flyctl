@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 )
 
 func (client *Client) GetApps(ctx context.Context, role *string) ([]App, error) {
@@ -52,6 +53,7 @@ func (client *Client) getAppsPage(ctx context.Context, orgID *string, role *stri
 				}
 				nodes {
 					id
+          internalNumericId
 					name
 					deployed
 					hostname
@@ -59,6 +61,7 @@ func (client *Client) getAppsPage(ctx context.Context, orgID *string, role *stri
 					organization {
 						slug
 						name
+            internalNumericId
 					}
 					currentRelease {
 						createdAt
@@ -72,6 +75,7 @@ func (client *Client) getAppsPage(ctx context.Context, orgID *string, role *stri
 
 	req := client.NewRequest(query)
 	if orgID != nil {
+		fmt.Printf("stuffing an org\n")
 		req.Var("org", *orgID)
 	}
 	if role != nil {

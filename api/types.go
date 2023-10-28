@@ -281,15 +281,16 @@ func (img *ImageVersion) FullImageRef() string {
 }
 
 type App struct {
-	ID        string
-	Name      string
-	State     string
-	Status    string
-	Deployed  bool
-	Hostname  string
-	AppURL    string
-	Version   int
-	NetworkID int
+	ID                string
+	Name              string
+	InternalNumericID int64
+	State             string
+	Status            string
+	Deployed          bool
+	Hostname          string
+	AppURL            string
+	Version           int
+	NetworkID         int
 
 	Release        *Release
 	Organization   Organization
