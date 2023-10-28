@@ -90,6 +90,7 @@ func runDebug(ctx context.Context) error {
 
 	for _, mac := range macs {
 		printMacaroon(ctx, maps, mac)
+		println("")
 	}
 
 	if !flag.GetBool(ctx, "verbose") {
@@ -272,7 +273,7 @@ func printMacaroon(ctx context.Context, maps mappings, m *macaroon.Macaroon) err
 					dprint("* This token can only be satisfied by talking to %s", cav.Location)
 				}
 			default:
-				dprint("cav: %T %+v", cav, cav)
+				dprint("* Internal caveat (you probably don't care): %T %+v", cav, cav)
 			}
 		})
 	}
