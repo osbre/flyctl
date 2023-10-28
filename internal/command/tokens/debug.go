@@ -240,17 +240,18 @@ func printMacaroon(ctx context.Context, maps mappings, m *macaroon.Macaroon) err
 			case *flyio.Clusters:
 				stringset(leadin, "clusters", "cluster", cav.Clusters)
 			case *macaroon.ValidityWindow:
-				before := time.Unix(cav.NotBefore, 0)
-				after := time.Unix(cav.NotAfter, 0)
-				now := time.Now()
-				valid := false
+				var (
+					now       = time.Now()
+					before    = time.Unix(cav.NotBefore, 0)
+					after     = time.Unix(cav.NotAfter, 0)
+					beforeAgo = now.Sub(before)
+					afterAgo  = after.Sub(now)
+					valid     = false
+				)
 
 				if now.After(before) && now.Before(after) {
 					valid = true
 				}
-
-				beforeAgo := now.Sub(before)
-				afterAgo := after.Sub(now)
 
 				validity := "and is currently valid"
 				if !valid {
