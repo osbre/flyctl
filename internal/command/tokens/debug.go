@@ -158,34 +158,6 @@ func timeHighOrder(d time.Duration) string {
 }
 
 func printMacaroon(ctx context.Context, maps mappings, m *macaroon.Macaroon) error {
-	m.Add(&flyio.Organization{ID: 9709, Mask: resset.ActionRead})
-	m.Add(&flyio.Organization{ID: 9709, Mask: (resset.ActionRead | resset.ActionWrite)})
-	m.Add(&flyio.Organization{ID: 9709, Mask: (resset.ActionWrite)})
-	m.Add(&flyio.Apps{
-		Apps: resset.ResourceSet[uint64]{
-			9091:    resset.ActionRead,
-			2004659: (resset.ActionRead | resset.ActionWrite),
-			5392:    resset.ActionWrite,
-		},
-	})
-	m.Add(&flyio.Volumes{
-		Volumes: resset.ResourceSet[string]{
-			"cab76cb897a6a78c9b6": resset.ActionRead,
-			"cb98cb89bc9789CB98c": (resset.ActionRead | resset.ActionDelete),
-			"89a7cc8b7c987bc9cbb": resset.ActionControl,
-		},
-	})
-	m.Add(&flyio.FeatureSet{
-		Features: resset.ResourceSet[string]{
-			"wg":               resset.ActionRead,
-			"space-modulators": (resset.ActionRead | resset.ActionDelete),
-			"flobdust":         resset.ActionControl,
-		},
-	})
-	m.Add(&flyio.Mutations{
-		Mutations: []string{"insert_frobnicator", "delete_frobnicator", "demote_kurt"},
-	})
-
 	caveats := m.UnsafeCaveats.Caveats
 
 	lookup := func(x uint64, mp map[int64]string) string {
